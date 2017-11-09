@@ -15,7 +15,7 @@ crime_file(crime_data, offence_description, postcodes)
 
 \item{offence_description}{A character string of  "offence_level_1".}
 
-\item{suburbs}{A two-element character vector. Each element is the name (UPPERCASE)
+\item{postcodes}{A two-element character vector. Each element is the name (UPPERCASE)
 of an SA postcode.}
 }
 \value{
