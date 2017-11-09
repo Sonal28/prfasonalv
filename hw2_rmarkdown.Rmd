@@ -1,0 +1,76 @@
+---
+title: "hw2rm_sonalv"
+author: "Sonal"
+date: "9 November 2017"
+output: html_document
+---
+## Aim
+The aim of the project is to compare the crime rate in the neighbouring postcodes for each of the five previous years: Postcode selected are 5000 and 5006 and offence_level_1 description: ACTS INTENDED TO CAUSE INJURY.
+
+```{r setup, include=TRUE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+library(devtools)
+devtools::install_github("Sonal28/prfasonalv")
+library(knitr)
+library(prfasonalv)
+library(data.table)
+library(readxl)
+library(ggplot2)
+
+```
+
+## Result
+The result of this code is to display cowplot for 5 year data and show the correlation in neightbuoring postcodes.
+The below knit table generates 20 rows markdown table for crime data set for year 2012-2013.
+```{r cars}
+
+options(knitr.table.format = "html")
+
+offence_des <- "ACTS INTENDED TO CAUSE INJURY"
+postcode_vec <- c(5000, 5006)
+data1 <- setDT(read_xlsx("data/crime-statistics-2012-13.xlsx"))
+setnames(data1, c("date", "suburb", "postcode", "offence_level_1",
+                  "offence_level_2", "offence_level_3", "offence_count"))
+knitr::kable(data1[1:20])
+
+```
+
+## Plots
+Generates cowplot for 5 year crime dataset.
+
+```{r pressure, echo=FALSE}
+
+offence_des <- "ACTS INTENDED TO CAUSE INJURY"
+postcode_vec <- c(5000, 5006)
+
+data1 <- setDT(read_xlsx("data/crime-statistics-2012-13.xlsx"))
+data1 <- setnames(data1, c("date", "suburb", "postcode", "offence_level_1",
+                  "offence_level_2", "offence_level_3", "offence_count"))
+plot_2012 <- crime_file(data1, offence_des, postcode_vec)
+
+data2 <- setDT(read_xlsx("data/crime-statistics-2013-14.xlsx"))
+data2 <- setnames(data2, c("date", "suburb", "postcode", "offence_level_1",
+                  "offence_level_2", "offence_level_3", "offence_count"))
+plot_2013 <- crime_file(data2, offence_des, postcode_vec)
+
+data3 <- setDT(read_xlsx("data/crime-statistics-2014-15.xlsx"))
+data3 <- setnames(data3, c("date", "suburb", "postcode", "offence_level_1",
+                  "offence_level_2", "offence_level_3", "offence_count"))
+plot_2014 <- crime_file(data3, offence_des, postcode_vec)
+
+data4 <- setDT(read_xlsx("data/crime-statistics-2015-16.xlsx"))
+data4 <- setnames(data4, c("date", "suburb", "postcode", "offence_level_1",
+                  "offence_level_2", "offence_level_3", "offence_count"))
+plot_2015 <- crime_file(data4, offence_des, postcode_vec)
+
+data5 <- setDT(read_xlsx("data/crime-statistics-2016-17.xlsx"))
+data5 <- setnames(data5, c("date", "suburb", "postcode", "offence_level_1",
+                  "offence_level_2", "offence_level_3", "offence_count"))
+plot_2016 <- crime_file(data5, offence_des, postcode_vec)
+
+cowplot::plot_grid(plot_2012, plot_2013, plot_2014, plot_2015, plot_2016, labels=c("2012-2013", "2013-2014", "2014-2015", "2015-2016", "2016-2017"), label_size = 8)
+
+```
+
+## Discussion:
+The above cowplot shows 5 different geom_count() plot grouping on basis of monthly occurance of crime at postcodes 5000 (x-axis) and postcodes 5006 (y-axis). Each geom plot shows the correlation within the neighbouring postcodes for different year(2012 to 2017). As we can see the plots, the co-occurance of postcodes are more concentrated when the value of x and y axis is near 0 (count), whereas less when it moves farther. So, the two postcodes are more co-related when the number of crime count is less.
