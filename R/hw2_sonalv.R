@@ -13,9 +13,6 @@
 #' @examples
 #' crime_file(data1,"ACTS INTENDED TO CAUSE INJURY", c(5000, 5006))
 
-library(readxl)
-library(data.table)
-library(dplyr)
 
 crime_file <- function(crime_data, offence_description, postcodes) {
   require(data.table)
