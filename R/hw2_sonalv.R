@@ -49,7 +49,7 @@ crime_file <- function(crime_data, offence_description, postcodes) {
   # You will need to filter, summarise and group by
   # Expect cols: "date", "postcode", "total_offence_count"
   plot_data <- crime_data[postcode %in% c(postcodes[1], postcodes[2]) & offence_level_1 %in% c(offence_description),
-                          list(total_offence_count = sum(offence_count),postcode),
+                          list(total_offence_count = sum(crime_data$offence_count),postcode),
                           by = date]
 
   # These lines will transform the plot_data structure to allow us to plot
