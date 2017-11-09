@@ -2,9 +2,8 @@
 % Please edit documentation in R/hw2_sonalv.R
 \name{crime_file}
 \alias{crime_file}
-\title{Correlation Finder
-
-\code{crime_file} Gets crime data of year 2012 to 2017, filter it and generates ggplot between 2 postcode..}
+\title{Postcode correlation ggplot
+\code{crime_file} : Gets crime data of year 2012 to 2017, filter it and generates ggplot between 2 postcode}
 \usage{
 crime_file(crime_data, offence_description, postcodes)
 }
@@ -13,18 +12,16 @@ crime_file(crime_data, offence_description, postcodes)
 "date" (POSIXct), "suburb" (chr), "postcode" (chr), "offence_level_1" (chr),
 "offence_level_2" (chr), "offence_level_3" (chr), "offence_count" (num).}
 
-\item{offence_description}{A character string of  "offence_level_1".}
+\item{offence_description}{A character string of "offence_level_1"}
 
-\item{postcodes}{A two-element character vector. Each element is the name (UPPERCASE)
-of an SA postcode.}
+\item{postcodes}{A two-element character vector. Each element is an SA postcode.}
 }
 \value{
 A ggplot object showing the correlation in offence count between the two input postcodes.
 }
 \description{
 Postcode correlation ggplot
-
-\code{crime_file} Gets crime data of year 2012 to 2017, filter it and generates ggplot between 2 postcode.
+\code{crime_file} : Gets crime data of year 2012 to 2017, filter it and generates ggplot between 2 postcode
 }
 \examples{
 crime_file(data1,"ACTS INTENDED TO CAUSE INJURY", c(5000, 5006))
