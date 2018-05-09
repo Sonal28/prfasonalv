@@ -1,0 +1,396 @@
+---
+title: "Final_Assessment"
+author: "Sonal Verma"
+date: "2 December 2017"
+output:
+  pdf_document:
+    keep_tex: yes
+    latex_engine: xelatex
+bibliography: bibliography.bib
+---
+
+## An approach to analyse the impact of extra-curricular activities on mathematics literacy in public and private schools in Germany.
+
+## Abstract
+
+Mathematics literacy is crucial for everyone, specifically for students studying in schools. This can help them in achieving their long term objectives. But mathematics knowledge and good performance not only depends on studying maths in class but on numerous factors such as type of school (public or private), extra-curricular activities (band, competitions, clubs, school play, etc.) in schools, and location. In this research, Programme for International Student Assessment (PISA) data has been used to analyse student mathematics literacy and its dependencies using data-driven approach. The finding from this research shows extra-curricular activities have major impact on student's mathematics performance in Germany. Due to this reason, the performance of student in private school is better than the performance of students of public schools. [1]
+
+## Introduction
+
+#### Background
+
+Mathematics competence is essential for people of every age and to develop this skill from the beginning is crucial for all individual. It can be improved by numerous ways like demographics, knowledge, surrounding. Thus, in this report we determine the impact of extra-curricular activities such as mathematics competitions, clubs, bands, chess club, volunteering, etc. on Germany student's mathematics literacy based on their school type using machine learning models. [2]
+
+#### OECD Work
+
+The OECD created Programme for International Student Assessment (PISA) in 1997 to conduct international survey of student and to investigate various factors that impacts the performance of student. PISA 2012 survey was conducted across various countries with students of 15 years to measure their mathematics knowledge, skills, attitudes and reflects the changes needed in the school to improve the performance of the students. It focuses on the skills that students should learn and can be essential to them in future to achieve their desired goal. [3]
+
+The OECD key finding as per research paper [pisa-2012-results-volume-IV] shows the value of extra-curricular activities in students performance. It shows the school system which offers more extra-curricular and creative extra-curricular to their students tends to shows better mathematics performance than schools having less extra-curricular activities. It also shows the performance difference in mathematics between students of public and private school. In Germany, mathematics performance of students studying in private schools was found better than the students studying in public schools due to more socio economically advantages. On accounting the extra-curricular activities in both public and private schools, it was found private schools have more activities than public schools and their students perform better in mathematics. [4]
+
+#### Importance of extra-curricular activities: 
+
+Studying mathematics in class and giving examinations can make student understand the concepts and get average or may be good marks. But this eventually increases burden on students and results in performance degradation. Extra-curricular activity is one the best way to improve performance of students studying either in private or public school. This helps students to develop skills and personality by doing some fun tasks. It could be either related to studies such as mathematics club, mathematics competition or could be related to sports, hobbies such as chess club, school team, sporting club, etc. This helps students to develop skills such as ability to work in peers, persistence, independent, confidence, dealing with situations, practical implementations and more creative. This improves overall personality of student, reduces the study burden and helps them in performing better. Thus, it's important for all schools to understand and incorporate extra-curricular activities in their school policies.
+
+## Method
+
+```{r setup, include=TRUE, message=FALSE, warning= FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(data.table)
+library(plyr)
+library(knitr)
+library(ggplot2)
+library(cowplot)
+library(gplots)
+library(kableExtra)
+library(magrittr)
+library(PISA2012lite)
+```
+
+### R packages used
+
+data.table: This package is related to data selection and manipulation operations such as such as data optimization, grouping, select, update, merge. [@data_frame]
+
+plyr: This package is used for splitting, applying and combining data. Used in the code for ddply to split the data and record its count. [@plyr_pack]
+
+knitr: This package is used for dynamic report generation. This report has been knit in R input language and LaTex (PDF) output markup language.
+
+ggplot2: This package is used to visualize data using graphics (various types of plots). [@ggplot2_pack]
+
+cowplot: This package is add-on to ggplot2. It helped in displaying multiple plot together. [@cowplot_pck]
+
+gplots: This package is used got plotmeans for plotting the mean value of student grades. [@ggplot_pack]
+
+kableExtra: This package is used for modifying the table styling. [@kableextra_pack]
+
+magrittr: This package is used to improve the readability of the code. It allows use of pipe operator "%>%" to pipe a value in some forward expression. [@magrittr_pack]
+
+PISA2012lite: This package is used to import PISA2012 data on which the entire investigation and visualizations has been performed. [@PISA_pack]
+
+###Analytical Techniques
+
+####Filtering
+The analysis was regarding mathematics performance of students studying in public and private schools of Germany and the impact of extra-curricular activities on them. So, required columns were extracted from computerStudent20102 and computerSchool2012 PISA table to new data tables. Then all the columns with unclear names were renamed with logical ones. The missing data was removed from the computer_school_data and the mean grade of school was calculated and stored in student_dt. Once the two tables are filtered, they are merged into one called final data having 14 columns and 194 rows.
+
+####Distrbution
+Plot_grid and stat_qq was used to estimate the data distribution in the the merged data set. The cowplot generated depicts that data is normally distributed based on the mean grade of schools.
+
+####Standardization
+This technique was used to keep parameters on similar scale and to ensure that correct mean is represented on the intercept.
+
+####t-test
+Since the data was normally distributed and test need to be done on independent variable with two levels, so t-test was performed. It helps in analysing whether mean grade distribution is identical between public and private school.
+
+####ANOVA
+This model is used for analysing the variance between dependent and independent variable. The data used here was normally distributed and had more than 2 independent variable and numeric dependent variable, so aov test is performed to obtain dependency between both.
+
+####Functions
+```{r message=FALSE, warning= FALSE}
+#' Calculate mean score as per activity and school type
+#' @param x A categorical data
+#' @return A data which has mean value of mathematics score.
+calculate_mean <- function(activity_data){
+  band_data <- aggregate(final_data$mean_school_grade, 
+                         list(activity_data,
+                              final_data$SCHOOLTYPE), mean)
+}
+
+```
+
+```{r message=FALSE, warning= FALSE}
+#' Create ggplot of mathematics score mean as per activity and school type
+#' @param x A categorical and numeric data
+#' @return A ggplot of mathematics score mean as per activity and school type
+create_plot <- function(activity_data, activity, activity_grade){
+  plot <- ggplot(data = activity_data, aes(x = activity,
+                                           y = activity_grade,
+                                           fill = schooltype)) +
+    geom_bar(stat="identity", position = position_dodge()) +
+    ylab("Mathematics Performance") + xlab("Activity and School Type")
+}
+```
+
+```{r message=FALSE, warning= FALSE}
+#' Put data onto a standard normal scale
+#' @param x A numeric vector
+#' @return A numeric vector of same length as `x`. This vector has mean 0 and sd 1.
+standardise <- function(x) {
+  (x - mean(x)) / sd(x)
+}
+```
+
+#### Load and clean data
+```{r message=FALSE, warning= FALSE}
+# Import PISA 2012 student questionnaire data
+computer_student <- computerStudent2012 %>% as.data.frame()
+computer_school <- computerSchool2012 %>% as.data.frame()
+
+#Interested in Germany country, school id, student id, plausible score
+#in mathematics
+computer_student_data <-
+  subset(computer_student[, c(1, 6, 7, 502:506, 532)],
+         CNT == "Germany")
+
+#Interested in Germany country, school id, school type, extra-curricular
+#activities column
+computer_school_data  <-
+  subset(computer_school[, c(1, 6, 7, 56:65)], CNT == "Germany")
+
+#Rename unclear identifier cols in computer_student_data and computer_school_data
+setnames(computer_student_data, c("STIDSTD", "CNT", "W_FSTUWT"),
+         c("STUDENTID", "COUNTRY", "FINALSTUDENTWEIGHT"))
+setnames(computer_school_data, c("CNT", "SC01Q01", "SC16Q01", "SC16Q02",
+                                 "SC16Q03", "SC16Q04", "SC16Q05", "SC16Q06",
+                                 "SC16Q07", "SC16Q08", "SC16Q09", "SC16Q10"),
+         c("COUNTRY", "SCHOOLTYPE", "BAND", "SCHOOLPLAY", "YEARBOOK_NEWSPAPER",
+           "VOLUNTEERING", "MATHEMATICSCLUB", "MATHEMATICSCOMPETITION", 
+           "CHESSCLUB", "COMPSICTCLUB", "ARTCLUB", "SPORTINGTEAM"))
+
+#Remove all missing data from computer_school_data
+computer_school_data <- computer_school_data[
+  complete.cases(computer_school_data),]
+computer_student_data <- computer_student_data[
+  complete.cases(computer_student_data),]
+
+student_dt <- setDT(computer_student_data)
+school_dt <- setDT(computer_school_data)
+
+#Fetching columns with name PV1MATh, PV2MATH, PV3MATH, PV4MATH, PV5MTH
+pv_cols <- paste0("PV", 1:5, "MATH")
+
+#Calculating average grades of students grouping by school type 
+student_dt <- student_dt[, 
+    lapply(.SD, weighted.mean, w = FINALSTUDENTWEIGHT / sum(FINALSTUDENTWEIGHT)),
+    by = SCHOOLID,
+    .SDcols = pv_cols
+    ][,
+      .(SCHOOLID = SCHOOLID, 
+        mean_school_grade = Reduce(`+`, .SD) / length(.SD) # this could also be done the 
+						     # long way by typing out and 
+						     # summing the column names 
+						     # instead of using .SD
+      ),
+      .SDcols = pv_cols
+      ]
+
+#Merging student and school table on basis of school type
+final_data <- merge(student_dt, school_dt, by = "SCHOOLID")
+final_data <- setDT(final_data)
+```
+
+##Results
+
+### Table
+The below table shows top 10 rows of the filtered final data on which the analysis is performed.
+
+```{r message=FALSE, warning= FALSE}
+#Display top 10 rows for final_data
+knitr::kable(final_data[1:10,], format = "latex") %>%
+  kable_styling(latex_options = "scale_down")
+```
+
+### Testing for normality
+The below histogram and abline plot shows the distribution of mean mathematics grade with respect to school type (Public and Private) in the filtered data. It is implemented to obtain the likelihood that the data has been drawn from normally distributed data. In this case both plot for Public and Private data shows that mean grade is normally distributed.
+
+```{r message=FALSE, warning= FALSE}
+#Verify the distribution of mean grades in Public schools
+cowplot::plot_grid(
+  ggplot(final_data[SCHOOLTYPE == "Public"], 
+         aes(mean_school_grade %>% log10)) + 
+    geom_histogram(color = "black", fill = "blue") + 
+    labs(title = "Plot 1:Normality test on public school"),
+  final_data[SCHOOLTYPE == "Public"] %>% ggplot() + 
+    stat_qq(aes(sample = mean_school_grade %>% 
+                             log10 %>% standardise)) + 
+    geom_abline(color = "blue", size = 1)
+)
+```
+
+```{r message=FALSE, warning= FALSE}
+#Verify the distribution of mean grades in Private schools
+cowplot::plot_grid(
+  ggplot(final_data[SCHOOLTYPE == "Private"], 
+         aes(mean_school_grade %>% log10)) + 
+    geom_histogram(color = "black", fill = "blue") + 
+    labs(title = "Plot 2:Normality test on private school"),
+  final_data[SCHOOLTYPE == "Private"] %>% ggplot() + 
+    stat_qq(aes(sample = mean_school_grade %>% 
+                             log10 %>% standardise)) + 
+    geom_abline(color = "blue", size = 1)
+)
+```
+
+### T-test
+t-test is performed when the data is normally distributed. It is used to analyse whether mean grade distribution is identical between public and private school. The p-value of this test is 0.03429 (below 0.05) which shows there is statistical significant evidence that there is dependency between mean school grade and type of school.
+
+```{r message=FALSE, warning= FALSE}
+## Implementing t-test to find dependency of school grade on school types
+grade_t_test <- t.test(mean_school_grade ~ SCHOOLTYPE, data = final_data)
+print(grade_t_test)
+
+```
+
+### Box-plot
+The below boxplot shows the mean mathematics grade distribution in public and private school types. The median mathematics grade in private school is 546.78, which is far more than median mathematics grade in public school which is 502.44.
+
+```{r message=FALSE, warning= FALSE}
+#Create a box plot between mean grade of schools and school type(public/private)
+grade_distribution <- ggplot(final_data,
+                             aes(x = SCHOOLTYPE, y = mean_school_grade,
+                                 fill = SCHOOLTYPE)) +
+        geom_boxplot(outlier.colour = "black", outlier.shape = 6, 
+                     outlier.size = 2, notch=TRUE)
+grade_distribution <- grade_distribution + xlab("School Type") +
+  ylab("Average School Grade")
+
+print(grade_distribution)
+
+```
+
+### ANOVA test
+Analysis of Variance helps in testing hypothesis between categorical variable with 2 or more level and quantitative variable. This test was used to analyse variance between the mathematics mean grade and occurrence of different extra-curricular such as Band, art club, etc. It shows 6 extra-curricular activities that have significant impact on mathematics literacy.
+
+```{r message=FALSE, warning= FALSE}
+#Implementing ANOVA test between mean school grade and extra-curricular activies
+band_anova <- aov(log(mean_school_grade) ~ BAND + SCHOOLPLAY + YEARBOOK_NEWSPAPER +
+           VOLUNTEERING + MATHEMATICSCLUB + MATHEMATICSCOMPETITION + CHESSCLUB +
+           COMPSICTCLUB + ARTCLUB + SPORTINGTEAM, data = final_data)
+summary(band_anova)
+
+tuk<- TukeyHSD(band_anova)
+print(tuk)
+```
+
+### Plots: Impact of extra-curricular activities
+The below plot represents the relation of average mathematics grade with school type and various extra-curricular activities. It shows plot with respect to 6 activities which has significant impact on mathematics grade.
+
+```{r message=FALSE, warning= FALSE}
+#Calculate school mean grade as per band and schooltype using 
+#function calculate_mean
+band_data <- calculate_mean(final_data$BAND)
+setnames(band_data, c("Group.1", "Group.2", "x"),
+         c("band", "schooltype", "mean_band_grade"))
+
+#Means plot between Band activity, school type and Mean school 
+#grade using funtion create_plot
+band_plot <- create_plot(band_data, band_data$band, 
+                         band_data$mean_band_grade)
+
+#Calculate school mean grade as per school play and schooltype 
+#using function calculate_mean
+schoolplay_data <- calculate_mean(final_data$SCHOOLPLAY)
+setnames(schoolplay_data, c("Group.1", "Group.2", "x"),
+         c("schoolplay", "schooltype", "mean_play_grade"))
+
+#Means plot between school play activity, school type and Mean school
+#grade using funtion create_plot
+play_plot <- create_plot(schoolplay_data, schoolplay_data$schoolplay,
+                         schoolplay_data$mean_play_grade)
+
+#Calculate school mean grade as per Yearbook/Newspaper and schooltype 
+#using function calculate_mean
+yearbook_newspaper_data <- calculate_mean(final_data$YEARBOOK_NEWSPAPER)
+setnames(yearbook_newspaper_data, c("Group.1", "Group.2", "x"),
+         c("yearbook_newspaper", "schooltype", "mean_yearbook_newspaper_grade"))
+
+#Means plot between school Yearbook/Newspaper activity, school type and Mean 
+#school grade using funtion create_plot
+yearbook_newspaper_plot <- create_plot(yearbook_newspaper_data, 
+                         yearbook_newspaper_data$yearbook_newspaper,
+                         yearbook_newspaper_data$mean_yearbook_newspaper_grade)
+
+#Calculate school mean grade as per Mathematics competition and schooltype 
+#using function calculate_mean
+maths_competition_data <- calculate_mean(final_data$MATHEMATICSCOMPETITION)
+setnames(maths_competition_data, c("Group.1", "Group.2", "x"),
+         c("maths_competition", "schooltype", "mean_maths_competition_grade"))
+
+#Means plot between school Mathematics competition activity, school type and Mean 
+#school grade using funtion create_plot
+maths_competition_plot <- create_plot(maths_competition_data, 
+                         maths_competition_data$maths_competition,
+                         maths_competition_data$mean_maths_competition_grade)
+
+#Calculate school mean grade as per chess club and schooltype 
+#using function calculate_mean
+chess_club_data <- calculate_mean(final_data$CHESSCLUB)
+setnames(chess_club_data, c("Group.1", "Group.2", "x"),
+         c("chessclub", "schooltype", "mean_chess_club_grade"))
+
+#Means plot between school chess club activity, school type and Mean 
+#school grade using funtion create_plot
+chess_club_plot <- create_plot(chess_club_data, 
+                         chess_club_data$chessclub,
+                         chess_club_data$mean_chess_club_grade)
+
+#Calculate school mean grade as per art club and schooltype 
+#using function calculate_mean
+art_club_data <- calculate_mean(final_data$ARTCLUB)
+setnames(art_club_data, c("Group.1", "Group.2", "x"),
+         c("artclub", "schooltype", "mean_art_club_grade"))
+
+#Means plot between school art club activity, school type and Mean 
+#school grade using funtion create_plot
+art_club_plot <- create_plot(art_club_data, 
+                         art_club_data$artclub,
+                         art_club_data$mean_art_club_grade)
+
+cowplot::plot_grid(band_plot, play_plot, align = 'h',
+                   rel_widths = c(2, 2.5),
+                   labels = c("Band and school type",
+                              "School Play and school type"),
+                   label_size = 11)
+cowplot::plot_grid(yearbook_newspaper_plot, maths_competition_plot,
+                   rel_widths = c(2, 2.5),
+                   labels = c("Yearbook/Newspaper and school type",
+                              "Maths comp and school type"), 
+                   label_size = 11)
+cowplot::plot_grid(chess_club_plot, chess_club_plot,
+                   rel_widths = c(2, 2.5),
+                   labels = c("Chess club and school type",
+                              "Art club and school type"), 
+                   label_size = 11)
+
+```
+
+##Discussion
+This report shows the impact of extra-curricular activities on mathematics literacy in public and private schools in Germany. It shows analysis on various factors which have significant impact on performance of student in Germany and what factors can help school in improving the mathematics literacy. The data set used to perform this analysis is subset of PISA2012 dataset.
+
+###Normality Test
+Normality test was performed on the filtered dataset to obtain the mathematics grade distribution in public and private school types. To analyse normality, prot_grid and stat_qq function was used by filtering data on the basis of school types. Plot 1: Normality test on public data shows the mathematics average grade is normally distributed among public schools. It uses histogram log plot and abline plot to represent distribution. As we can see in line plot, almost all the points are falling around straight line which shows data is normally distributed. Similarly, in Plot 2: Normality test on private data shows mathematics average grade is normally distributed among private schools too. As we can see in line plot, most of the points are falling around straight line which shows data is normally distributed.
+
+###T-test model
+The analysis data was normally distributed, so further analysis of mathematics grade distribution was done thought t-test. This test helped in analysing the grade distribution on basis of group school type, i.e., public and private. As we can see from the output that p-value of the test is 0.03429, which is less than the significance level alpha = 0.05. From the p-value we can conclude that mean grade of students in public school is significantly different from mean grade of students in private school with a p-value = 0.03429. It also shows that mean grade of students in public school is 502.44, which is lesser than the mean grade of student in private school which is 546.78.
+
+###Box plot
+For further analyse the distribution obtained from t-test, box plot had been created. This plot shows the distribution of mathematics grade in both public and private schools. Analysing grade distribution in public schools, we see that their mean grade is 502, upper limit is around 570 and lower limit is around 450. Whereas, on analysing grade distribution in private school we observe that their mean grade is 546, upper limit is around 605 and lower limit is around 480. We can see there is significant difference in the mathematics literacy of student if we analyse them on the basis of their school type. So, we can say that school type has impact on mathematics literacy.
+
+###ANOVA Model
+To perform further analysis on impact of extra-curricular activities on mean mathematics grade, ANOVA test is performed. Since the data is normally distributed and have both categorical (two-level) and numerical data, so this test can provide good insights. This test was performed between mean school grade and 10 extra-curricular activities, excluding country specific activity as it was not applicable in Germany.  The output shows the difference between means of some of the activities are statistically significant. The p-value of band, school play, yearbook/newspaper, mathematics competition, and sporting club is than 0.05, which shows that there is some significant relation between these activities and mathematics mean grade of students. So, these activities have either positive or negative impact on the student performance.
+It was analysed further using Tukey, which shows the comparison of mean between each activity levels. Each activity has data in Yes or No, so tukey shows the difference in mean when activity is not performed (No) and performed (Yes) in the school. It also gives the lower and upper limit of the difference. As we can analyse from the output, the difference of above 6 activities are negative, which explains that the mean grade of student is lower when these activities are not performed in school than the mean grade of student when activities are performed in their school. So, we can say that following 6 activities- band, school play, yearbook/newspaper, mathematics competition, chess club, and sporting club, helps in improving mathematics performance of students.
+
+###Plot between mathematics grade, school type and extra-curricular activities
+Finally, this last plot depicts relation between mathematics grade, school type and extra-curricular activities. It shows 6 plots:
+
+Plot Band and School type & Plot School Play and School type: 
+Both plot shows that schools having these activities have far better mathematics performance than school not having these activities. It also shows that all private schools have band and school play activity included, which is not the case with public schools and private schools have higher mean grade than the public school. This shows private school students perform better mathematics and can perform more better if they are provided with the above extra-curricular activities.
+
+Yearbook/Newspaper and School type, Mathematics competition and School type, Chess Club and School type & Art Club and School type: 
+All four plot shows that public and private school having the above activities have better mathematics performance than school not having those activities. It also shows that mean grade of private school is higher in every cases when the activity is there or not there in school. So, private school students perform better in mathematics, but if they have these extra-curricular activities in their school they can perform more better.
+
+##Conclusion
+In this report, I have demonstrated the impact of extra-curricular activities on mathematics literacy in public and private schools in Germany using PISA 2012 dataset. It proved that extra-curricular activities existence in both public and private schools have positive impact on mathematics literacy. It also shows that the students studying in private school have better performance than student studying in public school irrespective of existence of these activities. In conclusion, I would say to improve mathematics literacy extra-curricular activities should be included in schools (public and private).
+
+##References
+
+[1] http://search.ror.unisa.edu.au/record/UNISA_ALMA11143190810001831/media/digital/open/9916123009201831/12143190800001831/13143190790001831/pdf
+
+[2] https://www.oecd.org/pisa/pisaproducts/PISA%202012%20Technical%20Report_Chapter%2019.pdf
+
+[3] https://www.oecd.org/pisa/pisaproducts/PISA%202012%20framework%20e-book_final.pdf
+
+[4] https://www.oecd.org/pisa/keyfindings/pisa-2012-results-volume-IV.pdf
+
+[5] https://cran.r-project.org/web/packages
+
+
+
